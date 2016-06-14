@@ -33,7 +33,9 @@ class SOM:
 				g = self.gaussian((w_h, w_w), sigma) * lr
 				it = np.nditer(g, flags=['multi_index'])
 				while not it.finished:
+					# print elem - self.codebook[it.multi_index]
 					self.codebook[it.multi_index] += g[it.multi_index]*(elem - self.codebook[it.multi_index])
+					# print g[it.multi_index]*(elem - self.codebook[it.multi_index])
 					self.codebook[it.multi_index] = self.codebook[it.multi_index] / fast_norm(self.codebook[it.multi_index])
 					it.iternext()
 
@@ -59,10 +61,11 @@ class SOM:
 
 
 rgb = np.load("data/generated_rgb.np")
+# rgb /= 255.0
 
-s = SOM(6, 6, sigma=0.3, lr=0.5)
+s = SOM(6, 6, sigma=0.3, lr=0.3)
 
-s.initialize(rgb)
+s.initialize(rgb / 255)
 
 visualize_rgb(s.w, s.h, s.codebook, "init")
 s.train(rgb, 10)
