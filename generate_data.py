@@ -3,7 +3,6 @@ import sys
 import random
 import numpy as np
 
-
 r = lambda: random.randint(0,255)
 # r = lambda: random.choice([0, 255])
 count = int(sys.argv[1])
