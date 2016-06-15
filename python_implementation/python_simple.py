@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, "../")
 import random
 import numpy as np
 from sklearn.decomposition import PCA
@@ -77,7 +79,7 @@ class SOM:
 		return np.outer(ax, ay)
 
 
-rgb = np.load("data/generated_rgb.np")
+rgb = np.load("../data/generated_rgb.np")
 
 s = SOM(6, 6, sigma=0.3, lr=0.5)
 s.initialize(rgb)

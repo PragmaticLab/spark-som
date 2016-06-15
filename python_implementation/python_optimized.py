@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, "../")
 import random
 import numpy as np
 from sklearn.decomposition import PCA
@@ -60,12 +62,12 @@ class SOM:
 		return np.outer(ax, ay)
 
 
-rgb = np.load("data/generated_rgb.np")
+rgb = np.load("../data/generated_rgb.np")
 # rgb /= 255.0
 
 s = SOM(6, 6, sigma=0.3, lr=0.3)
 
-s.initialize(rgb / 255)
+s.initialize(rgb)
 
 visualize_rgb(s.w, s.h, s.codebook, "init")
 s.train(rgb, 10)

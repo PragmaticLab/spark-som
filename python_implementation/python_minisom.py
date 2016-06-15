@@ -3,7 +3,7 @@ import numpy as np
 from util import visualize_rgb
 from minisom import MiniSom    
 
-rgb = np.load("data/generated_rgb.np")
+rgb = np.load("../data/generated_rgb.np")
 
 w, h = 6, 6
 

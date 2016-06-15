@@ -9,5 +9,5 @@ def visualize_rgb(w, h, codebook, filename="test"):
 	imshow(codebook, interpolation="nearest")
 	# imshow(codebook)
 	# show()
-	savefig("results/" + filename + ".png")
+	savefig("../results/" + filename + ".png")
 	
