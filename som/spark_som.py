@@ -1,6 +1,5 @@
 """
-spark-submit --conf spark.driver.maxResultSize=1g --conf spark.yarn.executor.memoryOverhead=800 --num-executors 6 --executor-cores 1 --driver-memory 500m  --executor-memory 500m simple.py 
-
+spark-submit --conf spark.driver.maxResultSize=1g --conf spark.yarn.executor.memoryOverhead=800 --num-executors 6 --executor-cores 1 --driver-memory 500m  --executor-memory 500m spark_som.py 
 """
 import sys
 sys.path.insert(0, "../")
@@ -35,13 +34,20 @@ class SOM:
 		self.neigy = np.arange(self.h)
 		self.sigma = sigma
 		self.lr = lr
-		self._decay_func = lambda x, t, max_iter: x - (x - 0.000001) * float(t) / max_iter
+		# self._decay_func = lambda x, t, max_iter: x - (x - 0.000001) * float(t) / max_iter
+		self._decay_func = lambda x, t, max_iter: x/(1+float(t)/max_iter)
 		
 	def initialize(self, data):
 		self.codebook = np.array([[np.zeros((3)) for i in range(self.w)] for j in range(self.h)])
 		for j in range(self.h):
 			for i in range(self.w):
 				self.codebook[j][i] = random.choice(data)
+
+	def quantization_error(self, data):
+		error = 0
+		for x in data:
+			error += fast_norm(x-self.codebook[winner(x, self.codebook, self.w, self.h)])
+		return error/len(data)
 
 	def train(self, data, iterations, partitions=12):
 		from pyspark import SparkContext
@@ -50,9 +56,9 @@ class SOM:
 		for t in range(iterations):
 			sigma = self._decay_func(self.sigma, t, iterations)
 			lr = self._decay_func(self.lr, t, iterations)
-			print t, sigma, lr
 			codebookBC = sc.broadcast(self.codebook)
 			randomizedRDD = dataRDD.repartition(partitions)
+			print "iter: %d, sigma: %.2f, lr: %.2f, error: %.4f" % (t, sigma, lr, self.quantization_error(randomizedRDD.collect()))
 			def train_partition(partition_data):
 				localCodebook = codebookBC.value
 				for elem in partition_data:
@@ -61,7 +67,6 @@ class SOM:
 					it = np.nditer(g, flags=['multi_index'])
 					while not it.finished:
 						localCodebook[it.multi_index] += g[it.multi_index]*(elem - localCodebook[it.multi_index])
-						localCodebook[it.multi_index] = localCodebook[it.multi_index] / fast_norm(localCodebook[it.multi_index])
 						it.iternext()
 				return [localCodebook]
 			resultCodebookRDD = randomizedRDD.mapPartitions(train_partition)
@@ -73,7 +78,7 @@ class SOM:
 rgb = np.load("../data/generated_rgb.np")
 rgb /= 255.0
 
-s = SOM(6, 6, sigma=0.3, lr=0.5)
+s = SOM(6, 6, sigma=0.5, lr=0.3)
 
 s.initialize(rgb)
 

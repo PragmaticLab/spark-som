@@ -15,3 +15,4 @@ data = np.array(data).astype(np.float32)
 
 f = open('data/generated_rgb.np', 'wb')
 np.save(f, data)
+np.savetxt("data/generated_rgb.csv", data, delimiter=",")
