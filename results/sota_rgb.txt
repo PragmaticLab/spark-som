@@ -1,0 +1,23 @@
+root
+├── P_0_L
+│   ├── P_1_L
+│   │   ├── P_3_L
+│   │   └── P_3_R
+│   └── P_1_R
+│       ├── P_4_L
+│       └── P_4_R
+└── P_0_R
+    ├── P_2_L
+    └── P_2_R
+
+tag: root, id: 0, parent_id: -1, is_leaf: False, data: [ 116.67880249  122.83263397   46.8829422 ]
+tag: P_0_L, id: 1, parent_id: 0, is_leaf: False, data: [ 130.62808228  192.19117737  205.35003662]
+tag: P_0_R, id: 2, parent_id: 0, is_leaf: False, data: [ 125.99204254  167.10617065   63.16941071]
+tag: P_1_L, id: 3, parent_id: 1, is_leaf: False, data: [ 128.40768433   69.5426712   149.17750549]
+tag: P_1_R, id: 4, parent_id: 1, is_leaf: False, data: [ 132.92626953  192.59799194  206.39546204]
+tag: P_2_L, id: 5, parent_id: 2, is_leaf: True, data: [ 182.92123413  167.75053406   65.09837341]
+tag: P_2_R, id: 6, parent_id: 2, is_leaf: True, data: [  77.77099609  167.15538025   61.58501434]
+tag: P_3_L, id: 7, parent_id: 3, is_leaf: True, data: [  73.18772888   55.7845726   151.48156738]
+tag: P_3_R, id: 8, parent_id: 3, is_leaf: True, data: [ 179.28894043   58.31874847  135.75535583]
+tag: P_4_L, id: 9, parent_id: 4, is_leaf: True, data: [ 132.92626953  192.59799194  206.39546204]
+tag: P_4_R, id: 10, parent_id: 4, is_leaf: True, data: [ 132.92626953  192.59799194  206.39546204]
