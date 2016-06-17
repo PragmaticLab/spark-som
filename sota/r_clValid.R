@@ -1,4 +1,5 @@
 library(clValid)
+library(igraph)
 library(plyr)
 setwd("/Users/jason.xie/Downloads/spark-som/sota")
 data = read.csv("../data/generated_rgb.csv")
@@ -21,3 +22,4 @@ row.names(treeDF) <- treeDF$label
 treeGraph = treeDF[,c("parent", "id")]
 g <- graph.data.frame(treeGraph)
 plot(g, layout = layout.reingold.tilford(g, root=1), vertex.label=row.names(treeGraph),  main="sota graph", vertex.color="white", edge.color="grey", vertex.size=8, vertex.frame.color="yellow")
+

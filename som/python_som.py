@@ -2,7 +2,6 @@ import sys
 sys.path.insert(0, "../")
 import random
 import numpy as np
-from sklearn.decomposition import PCA
 from util import visualize_rgb
 
 def fast_norm(x):
