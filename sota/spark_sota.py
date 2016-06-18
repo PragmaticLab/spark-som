@@ -1,8 +1,18 @@
+"""
+spark-submit --conf spark.driver.maxResultSize=1g --conf spark.yarn.executor.memoryOverhead=800 --num-executors 6 --executor-cores 1 --driver-memory 500m  --executor-memory 500m spark_sota.py 
+"""
 import treelib 
 import numpy as np
 import random
 import operator
+import copy
 
+
+def show(tree):
+	print tree
+	for node in tree.all_nodes():
+		print "tag: %s, id: %d, parent_id: %d, is_leaf: %r, data: %s" % (node.tag, node.identifier, node.bpointer if node.bpointer is not None else -1, node.is_leaf(), str(node.data))
+	print "\n"
 
 nodeName = lambda parent, isLeft: "P_%d_%s" % (parent.identifier, "L" if isLeft else "R")
 
@@ -33,7 +43,7 @@ def updateWinner(elem, winner, tree, wcell, pcell, scell):
 	parent = nodeGetParent(winner, tree)
 	sister = nodeGetSister(winner, tree)
 	winner.data += wcell * (elem - winner.data)
-	if sister:
+	if sister and sister.is_leaf():
 		parent.data += pcell * (elem - parent.data)
 		sister.data += scell * (elem - sister.data)
 
@@ -52,12 +62,6 @@ class SOTA:
 		self.tree = treelib.Tree()
 		self.total_trees = 0
 
-	def show(self, show_architecture=True):
-		if show_architecture:
-			self.tree.show()
-		for node in self.tree.all_nodes():
-			print "tag: %s, id: %d, parent_id: %d, is_leaf: %r, data: %s" % (node.tag, node.identifier, node.bpointer if node.bpointer is not None else -1, node.is_leaf(), str(node.data))
-
 	def _getNextTreeId(self):
 		num = self.total_trees
 		self.total_trees += 1
@@ -74,14 +78,41 @@ class SOTA:
 		rootNode = self.tree.create_node("root", self._getNextTreeId(), data=np.mean(data, axis=0))
 		self._nodeReplicate(rootNode)
 
-	def train(self, data, sample=10000, num_iter=5):
+	def train(self, data, num_iter=5, partitions=12):
+		from pyspark import SparkContext
+		sc = SparkContext()
+		dataRDD = sc.parallelize(data).cache()
 
 		for i in range(num_iter):
-			sampled_data = data[np.random.choice(data.shape[0], sample)]
+			print "iter: %d" % i
+			# show(self.tree)
+			randomizedRDD = dataRDD.repartition(partitions)
+			iterateOnData(randomizedRDD.take(500), self.tree, self.wcell, self.pcell, self.scell) # this helps stablize the new identical children
+			treeBC = sc.broadcast(self.tree)
 
-			iterateOnData(sampled_data, self.tree, self.wcell, self.pcell, self.scell)
-			
-			h = self.getHeterogeneity(sampled_data)
+			def train_partition(partition_data):
+				localTree = treeBC.value
+				iterateOnData(partition_data, localTree, self.wcell, self.pcell, self.scell)
+				return [localTree]
+			resultTreeRDD = randomizedRDD.mapPartitions(train_partition)
+
+			def add_trees(treeA, treeB):
+				treeSum = copy.deepcopy(treeA)
+				for leaf in treeA.all_nodes():
+					identifier = leaf.identifier
+					treeSum.get_node(identifier).data = treeA.get_node(identifier).data + treeB.get_node(identifier).data
+				return treeSum
+			sumTree = resultTreeRDD.reduce(add_trees)
+
+			def average_tree(tree, count):
+				newTree = copy.deepcopy(tree)
+				for leaf in newTree.all_nodes():
+					leaf.data = leaf.data / float(count)
+				return newTree
+			newTree = average_tree(sumTree, partitions)
+			self.tree = newTree
+			# show(self.tree)
+			h = self.getHeterogeneity(randomizedRDD.take(1000))
 			cellToDivide = self.tree.get_node(h[:,0][np.argmax(h[:,2])])
 			if i != num_iter - 1:
 				self._nodeReplicate(cellToDivide)
@@ -111,6 +142,5 @@ rgb = np.load("../data/generated_rgb.np")
 sota = SOTA(wcell=0.01, pcell=0.005, scell=0.001)
 sota.initialize(rgb)
 
-sota.train(rgb, sample=10000, num_iter=3)
-sota.show()
-
+sota.train(rgb, 4, partitions=12)
+show(sota.tree)
